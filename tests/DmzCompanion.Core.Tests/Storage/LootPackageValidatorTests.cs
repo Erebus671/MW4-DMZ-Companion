@@ -18,6 +18,21 @@ public sealed class LootPackageValidatorTests
         Assert.Contains(LootPackageValidator.Validate(package), e => e.Contains("map 'warzone'", StringComparison.Ordinal));
     }
 
+    [Theory]
+    [InlineData(0.8, 0, 1.2, 0.3)]
+    [InlineData(-0.1, 0, 1, 0.3)]
+    [InlineData(800, 0, 1440, 400)]
+    [InlineData(1, 0, 0.8, 0.3)]
+    public void ExpansionBoundsOutsideParentMapNormalizedRange_AreRejected(double minX, double minY, double maxX, double maxY)
+    {
+        var package = SamplePackage.Create() with
+        {
+            Expansions = [new MapExpansion("russia", "dmz", "Russia", ExpansionStatus.Announced, new MapRect(minX, minY, maxX, maxY))],
+        };
+
+        Assert.Contains(LootPackageValidator.Validate(package), e => e.Contains("'russia': bounds are invalid", StringComparison.Ordinal));
+    }
+
     [Fact]
     public void ContentInExpansionOfAnotherMap_IsRejected()
     {

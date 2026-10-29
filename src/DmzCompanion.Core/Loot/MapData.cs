@@ -12,7 +12,10 @@ public sealed record GameMap(
     int ReferenceHeight,
     double MetersPerPixel);
 
-/// <summary>New area added to an existing map. Content in it references both the map and this expansion.</summary>
+/// <summary>
+/// New area added to an existing map. Content in it references both the map and this expansion.
+/// Bounds use the parent map image's normalized 0-1 coordinates.
+/// </summary>
 public sealed record MapExpansion(
     string Id,
     string MapId,

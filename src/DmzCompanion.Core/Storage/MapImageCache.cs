@@ -37,8 +37,8 @@ public enum MapImageAction
     /// <summary>New image has a different size; keep the old copy and recalibrate overlays.</summary>
     KeepCacheNeedsRecalibration,
 
-    /// <summary>First download has an unexpected size; there's no old copy to keep.</summary>
-    ReplaceCacheNeedsRecalibration,
+    /// <summary>First download has an unexpected size; discard it. See <see cref="Models.AppConstants.IssuesUrl"/>.</summary>
+    RejectDownload,
 }
 
 public static class MapImageRefreshPolicy
@@ -114,13 +114,24 @@ public sealed class MapImageCache(CacheDatabase database, ILogger<MapImageCache>
                 return MapImageAction.KeepCache;
             }
 
-            await Touch(connection, tx, map.Id, now, cached.NeedsRecalibration, ct).ConfigureAwait(false);
+            await Touch(connection, tx, map.Id, now, NeedsRecalibration(cached, map), ct).ConfigureAwait(false);
             action = MapImageAction.KeepCache;
         }
         else if (result.Width == map.ReferenceWidth && result.Height == map.ReferenceHeight)
         {
             await Upsert(connection, tx, map, result, now, needsRecalibration: false, ct).ConfigureAwait(false);
             action = MapImageAction.ReplaceCache;
+        }
+        else if (cached is null)
+        {
+            _logger.LogWarning(
+                "First map image for {MapId} is {Width}x{Height}, expected {RefWidth}x{RefHeight}; rejected.",
+                map.Id,
+                result.Width,
+                result.Height,
+                map.ReferenceWidth,
+                map.ReferenceHeight);
+            return MapImageAction.RejectDownload;
         }
         else
         {
@@ -131,21 +142,29 @@ public sealed class MapImageCache(CacheDatabase database, ILogger<MapImageCache>
                 result.Height,
                 map.ReferenceWidth,
                 map.ReferenceHeight);
-
-            if (cached is null)
-            {
-                await Upsert(connection, tx, map, result, now, needsRecalibration: true, ct).ConfigureAwait(false);
-                action = MapImageAction.ReplaceCacheNeedsRecalibration;
-            }
-            else
-            {
-                await Touch(connection, tx, map.Id, now, needsRecalibration: true, ct).ConfigureAwait(false);
-                action = MapImageAction.KeepCacheNeedsRecalibration;
-            }
+            await Touch(connection, tx, map.Id, now, needsRecalibration: true, ct).ConfigureAwait(false);
+            action = MapImageAction.KeepCacheNeedsRecalibration;
         }
 
         tx.Commit();
         return action;
+    }
+
+    /// <summary>Clears a stale flag once the reference size matches the cached image.</summary>
+    private bool NeedsRecalibration(MapImageInfo cached, GameMap map)
+    {
+        if (!cached.NeedsRecalibration)
+        {
+            return false;
+        }
+
+        if (cached.Width == map.ReferenceWidth && cached.Height == map.ReferenceHeight)
+        {
+            _logger.LogInformation("Map image for {MapId} matches the reference size again; recalibration flag cleared.", map.Id);
+            return false;
+        }
+
+        return true;
     }
 
     private static async Task Touch(

@@ -87,15 +87,55 @@ public sealed class MapImageCacheTests : CacheTestBase
     }
 
     [Fact]
-    public async Task FirstDownloadWithWrongSize_IsUsedButFlagged()
+    public async Task FailedFetch_DoesNotUpdateLastChecked()
+    {
+        using var db = await OpenAsync(Ct);
+        var cache = new MapImageCache(db, _logger);
+        await cache.ApplyCheckAsync(SamplePackage.Map, Downloaded(1440, 1404), Ct);
+        var checkedAt = Time.Now;
+        Time.Now += TimeSpan.FromDays(40);
+
+        await cache.ApplyCheckAsync(SamplePackage.Map, new MapImageCheckResult(MapImageCheckStatus.Failed), Ct);
+
+        var info = (await cache.GetAsync("dmz", Ct))!;
+        Assert.Equal(checkedAt, info.LastCheckedUtc);
+        Assert.True(MapImageRefreshPolicy.IsCheckDue(info, SamplePackage.Map, Time.Now, userRequested: false));
+    }
+
+    [Fact]
+    public async Task ReferenceMatchingCachedSize_ClearsRecalibrationFlag()
+    {
+        using var db = await OpenAsync(Ct);
+        var cache = new MapImageCache(db, _logger);
+        var resized = SamplePackage.Map with { ReferenceWidth = 2048, ReferenceHeight = 1996 };
+        await cache.ApplyCheckAsync(resized, Downloaded(2048, 1996), Ct);
+        await cache.ApplyCheckAsync(resized with { ReferenceWidth = 1440, ReferenceHeight = 1404 }, Downloaded(2048, 1996), Ct);
+        Assert.True((await cache.GetAsync("dmz", Ct))!.NeedsRecalibration);
+
+        var notModified = new MapImageCheckResult(MapImageCheckStatus.NotModified);
+        await cache.ApplyCheckAsync(SamplePackage.Map with { ReferenceWidth = 1000 }, notModified, Ct);
+        Assert.True((await cache.GetAsync("dmz", Ct))!.NeedsRecalibration);
+
+        var action = await cache.ApplyCheckAsync(resized, notModified, Ct);
+
+        Assert.Equal(MapImageAction.KeepCache, action);
+        Assert.False((await cache.GetAsync("dmz", Ct))!.NeedsRecalibration);
+    }
+
+    [Fact]
+    public async Task FirstDownloadWithWrongSize_IsRejected()
     {
         using var db = await OpenAsync(Ct);
         var cache = new MapImageCache(db, _logger);
 
         var action = await cache.ApplyCheckAsync(SamplePackage.Map, Downloaded(800, 600), Ct);
 
-        Assert.Equal(MapImageAction.ReplaceCacheNeedsRecalibration, action);
-        Assert.True((await cache.GetAsync("dmz", Ct))!.NeedsRecalibration);
+        Assert.Equal(MapImageAction.RejectDownload, action);
+        Assert.Null(await cache.GetAsync("dmz", Ct));
+        var warning = Assert.Single(_logger.Records, r => r.Level == LogLevel.Warning);
+        Assert.Contains("dmz", warning.Message, StringComparison.Ordinal);
+        Assert.Contains("800x600", warning.Message, StringComparison.Ordinal);
+        Assert.Contains("1440x1404", warning.Message, StringComparison.Ordinal);
     }
 
     [Fact]
