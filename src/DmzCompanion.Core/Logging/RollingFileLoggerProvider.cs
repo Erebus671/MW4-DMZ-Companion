@@ -103,7 +103,6 @@ public sealed class RollingFileLoggerProvider : ILoggerProvider
                 Write(LogEntryFormatter.Format(
                     Time.GetLocalNow(),
                     LogLevel.Warning,
-                    default,
                     nameof(RollingFileLoggerProvider),
                     $"{dropped} log entries dropped; queue full.",
                     null));

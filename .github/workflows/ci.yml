@@ -2,8 +2,8 @@ name: CI
 
 on:
   push:
-    branches: [main]
   pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -56,5 +56,19 @@ jobs:
       - name: Install MAUI workload
         run: dotnet workload install maui
 
-      - name: Build
-        run: dotnet build src/DmzCompanion.App/DmzCompanion.App.csproj --configuration Release -f net10.0-windows10.0.19041.0
+      - name: Build unsigned MSIX
+        run: >-
+          dotnet publish src/DmzCompanion.App/DmzCompanion.App.csproj
+          --configuration Release
+          -f net10.0-windows10.0.19041.0
+          -p:RuntimeIdentifierOverride=win-x64
+          -p:GenerateAppxPackageOnBuild=true
+          -p:AppxPackageSigningEnabled=false
+          -p:AppxPackageDir=${{ github.workspace }}/artifacts/msix/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DmzCompanion-msix-unsigned
+          path: artifacts/msix/
+          if-no-files-found: error
+          retention-days: 14

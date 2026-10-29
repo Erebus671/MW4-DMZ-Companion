@@ -22,20 +22,6 @@ public class LoggingExtensionsTests
     }
 
     [Fact]
-    public void LogFatalUsesCriticalWithFatalEvent()
-    {
-        var capture = new CaptureLoggerProvider();
-        using var factory = LoggerFactory.Create(b => b.AddLevelSwitch(new LogLevelSwitch()).AddProvider(capture));
-
-        factory.CreateLogger("Test").LogFatal(null, "boom {Code}", 7);
-
-        var record = Assert.Single(capture.Records);
-        Assert.Equal(LogLevel.Critical, record.Level);
-        Assert.True(LogLevelSwitch.IsFatal(record.EventId));
-        Assert.Equal("boom 7", record.Message);
-    }
-
-    [Fact]
     public void AddRollingFileRegistersSingleProvider()
     {
         var dir = Path.Combine(Path.GetTempPath(), "dmz-tests", Guid.NewGuid().ToString("N"));

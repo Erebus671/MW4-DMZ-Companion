@@ -1,5 +1,4 @@
 using DmzCompanion.Core.Diagnostics;
-using DmzCompanion.Core.Logging;
 using Microsoft.Extensions.Logging;
 
 namespace DmzCompanion.Core.Tests;
@@ -9,7 +8,7 @@ public class GlobalExceptionHandlerTests
     private readonly CaptureLogger<GlobalExceptionHandler> _logger = new();
 
     [Fact]
-    public void TerminatingLogsFatalAndRunsCallback()
+    public void TerminatingLogsCriticalAndRunsCallback()
     {
         var terminated = false;
         var handler = new GlobalExceptionHandler(_logger, () => terminated = true);
@@ -18,7 +17,6 @@ public class GlobalExceptionHandlerTests
 
         var record = Assert.Single(_logger.Records);
         Assert.Equal(LogLevel.Critical, record.Level);
-        Assert.True(LogLevelSwitch.IsFatal(record.EventId));
         Assert.IsType<InvalidOperationException>(record.Exception);
         Assert.True(terminated);
     }
@@ -30,7 +28,6 @@ public class GlobalExceptionHandlerTests
 
         var record = Assert.Single(_logger.Records);
         Assert.Equal(LogLevel.Critical, record.Level);
-        Assert.False(LogLevelSwitch.IsFatal(record.EventId));
     }
 
     [Fact]

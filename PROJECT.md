@@ -28,9 +28,12 @@ Run from the repo root so `global.json` applies (it selects the Microsoft.Testin
 | Core and tests, any OS | `dotnet build DmzCompanion.Core.slnf` |
 | Run tests | `dotnet test --solution DmzCompanion.Core.slnf` |
 | App, Windows only | `dotnet workload install maui`, then `dotnet build src/DmzCompanion.App -f net10.0-windows10.0.19041.0` |
+| Unsigned MSIX, Windows only | `dotnet publish src/DmzCompanion.App -c Release -f net10.0-windows10.0.19041.0 -p:RuntimeIdentifierOverride=win-x64 -p:GenerateAppxPackageOnBuild=true -p:AppxPackageSigningEnabled=false` |
+
+CI uploads the unsigned MSIX as the `DmzCompanion-msix-unsigned` artifact. Release signing isn't set up yet.
 
 ## Logging
 
 Levels: Debug, Info, Warn, Error, Critical, Fatal, set in Settings and saved in Preferences. Default is Info. Logs roll daily or at 5 MB, keeping 10 files, in `logs` under the app's local data folder (`FileSystem.AppDataDirectory`).
 
-Fatal is `LogLevel.Critical` with event ID 9999 "Fatal"; at the Fatal level only those entries reach the log file.
+Fatal maps to `LogLevel.Critical`, so the Fatal and Critical levels both capture every Critical entry.

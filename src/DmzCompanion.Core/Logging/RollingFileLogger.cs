@@ -17,7 +17,7 @@ internal sealed class RollingFileLogger(string category, RollingFileLoggerProvid
         Func<TState, Exception?, string> formatter)
     {
         ArgumentNullException.ThrowIfNull(formatter);
-        if (!provider.LevelSwitch.ShouldLog(logLevel, eventId))
+        if (!provider.LevelSwitch.IsEnabled(logLevel))
         {
             return;
         }
@@ -25,7 +25,6 @@ internal sealed class RollingFileLogger(string category, RollingFileLoggerProvid
         var entry = LogEntryFormatter.Format(
             provider.Time.GetLocalNow(),
             logLevel,
-            eventId,
             category,
             formatter(state, exception),
             exception);

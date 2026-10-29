@@ -1,4 +1,3 @@
-using DmzCompanion.Core.Logging;
 using Microsoft.Extensions.Logging;
 
 namespace DmzCompanion.Core.Diagnostics;
@@ -26,7 +25,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
 
         if (isTerminating)
         {
-            logger.LogFatal(exception, "Unhandled exception from {Source}; terminating.", source);
+            logger.LogCritical(exception, "Unhandled exception from {Source}; terminating.", source);
             onTerminating?.Invoke();
         }
         else

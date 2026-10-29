@@ -53,24 +53,15 @@ public class LogLevelSwitchTests
         Assert.Throws<ArgumentOutOfRangeException>(() => new LogLevelSwitch((AppLogLevel)(-1)));
     }
 
-    [Fact]
-    public void FatalPassesOnlyFatalEvents()
+    [Theory]
+    [InlineData(AppLogLevel.Critical)]
+    [InlineData(AppLogLevel.Fatal)]
+    public void CriticalAndFatalPassOnlyCritical(AppLogLevel level)
     {
-        var sw = new LogLevelSwitch(AppLogLevel.Fatal);
+        var sw = new LogLevelSwitch(level);
 
-        Assert.False(sw.ShouldLog(LogLevel.Critical, default));
-        Assert.False(sw.ShouldLog(LogLevel.Error, LogLevelSwitch.FatalEvent));
-        Assert.True(sw.ShouldLog(LogLevel.Critical, LogLevelSwitch.FatalEvent));
-    }
-
-    [Fact]
-    public void CriticalPassesFatalAndCritical()
-    {
-        var sw = new LogLevelSwitch(AppLogLevel.Critical);
-
-        Assert.True(sw.ShouldLog(LogLevel.Critical, default));
-        Assert.True(sw.ShouldLog(LogLevel.Critical, LogLevelSwitch.FatalEvent));
-        Assert.False(sw.ShouldLog(LogLevel.Error, default));
+        Assert.True(sw.IsEnabled(LogLevel.Critical));
+        Assert.False(sw.IsEnabled(LogLevel.Error));
     }
 
     [Theory]

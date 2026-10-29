@@ -9,11 +9,11 @@
     <MauiXamlInflator>SourceGen</MauiXamlInflator>
 
     <ApplicationTitle>DMZ Companion</ApplicationTitle>
-    <ApplicationId>com.gravinoc.dmzcompanion</ApplicationId>
+    <ApplicationId>com.atratech.dmzcompanion</ApplicationId>
     <ApplicationDisplayVersion>0.1.0</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>
 
-    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsPackageType>MSIX</WindowsPackageType>
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
     <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
   </PropertyGroup>

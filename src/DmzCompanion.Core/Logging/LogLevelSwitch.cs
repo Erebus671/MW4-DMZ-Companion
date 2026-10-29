@@ -3,12 +3,10 @@ using Microsoft.Extensions.Logging;
 namespace DmzCompanion.Core.Logging;
 
 /// <summary>Runtime-switchable minimum log level.</summary>
-/// <remarks>Fatal is LogLevel.Critical tagged with <see cref="FatalEvent"/>.</remarks>
+/// <remarks>Fatal and Critical both map to LogLevel.Critical.</remarks>
 public sealed class LogLevelSwitch
 {
     public const AppLogLevel DefaultLevel = AppLogLevel.Info;
-
-    public static readonly EventId FatalEvent = new(9999, "Fatal");
 
     private volatile AppLogLevel _level;
 
@@ -39,18 +37,6 @@ public sealed class LogLevelSwitch
     public LogLevel MinimumLevel => ToLogLevel(_level);
 
     public bool IsEnabled(LogLevel level) => level != LogLevel.None && level >= MinimumLevel;
-
-    public bool ShouldLog(LogLevel level, EventId eventId)
-    {
-        if (!IsEnabled(level))
-        {
-            return false;
-        }
-
-        return _level != AppLogLevel.Fatal || IsFatal(eventId);
-    }
-
-    public static bool IsFatal(EventId eventId) => eventId.Id == FatalEvent.Id;
 
     public static LogLevel ToLogLevel(AppLogLevel level) => level switch
     {

@@ -47,19 +47,19 @@ public sealed class RollingFileLoggerProviderTests : IDisposable
     }
 
     [Fact]
-    public void FatalLevelWritesOnlyFatalEntries()
+    public void FatalLevelWritesCriticalEntries()
     {
         var sw = new LogLevelSwitch(AppLogLevel.Fatal);
         using (var provider = Create(sw))
         {
             var logger = provider.CreateLogger("Cat");
+            logger.LogError("error");
             logger.LogCritical("critical");
-            logger.LogFatal(null, "fatal");
         }
 
         var text = ReadAll();
-        Assert.DoesNotContain("critical", text, StringComparison.Ordinal);
-        Assert.Contains("FTL Cat: fatal", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("error", text, StringComparison.Ordinal);
+        Assert.Contains("CRT Cat: critical", text, StringComparison.Ordinal);
     }
 
     [Fact]
