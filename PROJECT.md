@@ -28,9 +28,18 @@ Run from the repo root so `global.json` applies (it selects the Microsoft.Testin
 | Core and tests, any OS | `dotnet build DmzCompanion.Core.slnf` |
 | Run tests | `dotnet test --solution DmzCompanion.Core.slnf` |
 | App, Windows only | `dotnet workload install maui`, then `dotnet build src/DmzCompanion.App -f net10.0-windows10.0.19041.0` |
-| Unsigned MSIX, Windows only | `dotnet publish src/DmzCompanion.App -c Release -f net10.0-windows10.0.19041.0 -p:RuntimeIdentifierOverride=win-x64 -p:GenerateAppxPackageOnBuild=true -p:AppxPackageSigningEnabled=false` |
+| Unsigned MSIX for local testing, Windows only | `dotnet publish src/DmzCompanion.App -c Release -f net10.0-windows10.0.19041.0 -p:RuntimeIdentifierOverride=win-x64 -p:GenerateAppxPackageOnBuild=true -p:AppxPackageSigningEnabled=false` |
 
-CI uploads the unsigned MSIX as the `DmzCompanion-msix-unsigned` artifact. Release signing isn't set up yet.
+## Packaging
+
+| Item | Value |
+|---|---|
+| Format | MSIX, win-x64 |
+| Publisher | `CN=AtraTech` |
+| Signing | Self-signed. CI creates a throwaway `CN=AtraTech` cert per run; no cert or key is stored in the repo or secrets |
+| CI artifact | `DmzCompanion-msix-selfsigned`: the signed MSIX plus `DmzCompanion-AtraTech.cer` |
+| Install | Import the `.cer` into Local Machine > Trusted People, then open the MSIX |
+| Updates | App Installer feed (`.appinstaller` on a stable HTTPS URL), Phase 7 |
 
 ## Logging
 
