@@ -20,9 +20,9 @@ Status: :white_check_mark: done, :construction: in progress, :white_large_square
 - :white_check_mark: Sign off on the mockups
 
 ### Phase 1: Foundation
-- :white_large_square: .NET 10 MAUI solution with a shared core library
-- :white_large_square: Logging with a log-level setting in the app
-- :white_large_square: Unit tests and CI builds
+- :construction: .NET 10 MAUI solution with a shared core library
+- :white_check_mark: Logging with a log-level setting in the app
+- :construction: Unit tests and CI builds
 
 ### Phase 2: Loot data
 - :white_large_square: Data model for maps, zones, POIs, items, and spawn areas
