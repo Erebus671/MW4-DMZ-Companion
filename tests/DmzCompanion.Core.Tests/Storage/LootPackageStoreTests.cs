@@ -54,6 +54,24 @@ public sealed class LootPackageStoreTests : CacheTestBase
     }
 
     [Fact]
+    public async Task Replace_RechecksMapImageRecalibration()
+    {
+        using var db = await OpenAsync(Ct);
+        var store = new LootPackageStore(db, _logger);
+        var cache = new MapImageCache(db, new CaptureLogger<MapImageCache>());
+        await store.ReplaceAsync(SamplePackage.Create(), Ct);
+        await cache.ApplyCheckAsync(SamplePackage.Map, new(MapImageCheckStatus.Downloaded, null, 1440, 1404), Ct);
+
+        var resized = SamplePackage.Create(revision: 2) with { Maps = [SamplePackage.Map with { ReferenceWidth = 2048 }] };
+        await store.ReplaceAsync(resized, Ct);
+        Assert.True((await cache.GetAsync("dmz", Ct))!.NeedsRecalibration);
+        Assert.Single(_logger.Records, r => r.Level == LogLevel.Warning);
+
+        await store.ReplaceAsync(SamplePackage.Create(revision: 3), Ct);
+        Assert.False((await cache.GetAsync("dmz", Ct))!.NeedsRecalibration);
+    }
+
+    [Fact]
     public async Task Replace_SwapsContentsWholesale()
     {
         using var db = await OpenAsync(Ct);

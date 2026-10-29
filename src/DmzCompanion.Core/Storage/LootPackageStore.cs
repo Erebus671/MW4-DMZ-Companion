@@ -215,8 +215,54 @@ public sealed class LootPackageStore(CacheDatabase database, ILogger<LootPackage
             }
         }
 
+        foreach (var map in package.Maps)
+        {
+            await RecheckRecalibrationAsync(connection, tx, map, ct).ConfigureAwait(false);
+        }
+
         tx.Commit();
         return true;
+    }
+
+    // Reference sizes can change with a package; keep the map image flag in step (q-082).
+    private async Task RecheckRecalibrationAsync(
+        SqliteConnection connection,
+        SqliteTransaction tx,
+        GameMap map,
+        CancellationToken ct)
+    {
+        await using var command = Command(
+            connection,
+            tx,
+            """
+            UPDATE map_images
+            SET needs_recalibration = CASE WHEN width = $w AND height = $h THEN 0 ELSE 1 END
+            WHERE map_id = $id AND needs_recalibration <> CASE WHEN width = $w AND height = $h THEN 0 ELSE 1 END
+            RETURNING needs_recalibration, width, height;
+            """,
+            ("$id", map.Id),
+            ("$w", map.ReferenceWidth),
+            ("$h", map.ReferenceHeight));
+        await using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
+        if (!await reader.ReadAsync(ct).ConfigureAwait(false))
+        {
+            return;
+        }
+
+        if (reader.GetInt64(0) == 1)
+        {
+            _logger.LogWarning(
+                "Cached map image for {MapId} is {Width}x{Height}, package reference is {RefWidth}x{RefHeight}; overlays need recalibration.",
+                map.Id,
+                reader.GetInt64(1),
+                reader.GetInt64(2),
+                map.ReferenceWidth,
+                map.ReferenceHeight);
+        }
+        else
+        {
+            _logger.LogInformation("Map image for {MapId} matches the package reference size; recalibration flag cleared.", map.Id);
+        }
     }
 
     private static async Task<LootPackage?> LoadCoreAsync(SqliteConnection connection, CancellationToken ct)
