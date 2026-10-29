@@ -25,9 +25,9 @@ Status: :white_check_mark: done, :construction: in progress, :white_large_square
 - :white_check_mark: Unit tests and CI builds
 
 ### Phase 2: Loot data
-- :white_large_square: Data model for maps, zones, POIs, items, and spawn areas
+- :white_check_mark: Data model for maps, zones, POIs, items, and spawn areas
 - :white_large_square: Versioned, signed data package with automatic updates
-- :white_large_square: Local offline cache
+- :white_check_mark: Local offline cache
 
 ### Phase 3: Interactive map (Russia pending official release)
 - :white_large_square: Pan/zoom map with layer toggles
