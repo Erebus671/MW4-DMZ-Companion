@@ -29,7 +29,7 @@ Status: :white_check_mark: done, :construction: in progress, :white_large_square
 - :white_large_square: Versioned, signed data package with automatic updates
 - :white_large_square: Local offline cache
 
-### Phase 3: Interactive map
+### Phase 3: Interactive map (Russia pending official release)
 - :white_large_square: Pan/zoom map with layer toggles
 - :white_large_square: Zone and building label layer
 - :white_large_square: Spawn area markers and detail panel with spawn photos
