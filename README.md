@@ -5,8 +5,8 @@ A companion app for MW4 DMZ players. Find loot, plan runs, and track the resourc
 ## Features
 
 - **Interactive map**: pan, zoom, layer toggles, zone and building labels, search, and points of interest
-- **Loot locations**: weapons, manuals, parts, components, and keys, with spawn areas and photos of where they spawn
-- **Resource tracking**: have/need counts, goals, and progress
+- **Loot locations**: manuals, parts, components, and keys, with spawn areas and photos of where they spawn
+- **Resource tracking**: have/need counts, crafting recipes, goals, and progress
 - **Works offline**: the loot data is cached on your device and updates automatically
 - **No account needed**: move your progress between devices with a sync code
 
@@ -17,7 +17,7 @@ Status: :white_check_mark: done, :construction: in progress, :white_large_square
 ### Phase 0: Design
 - :construction: UI mockups (map, loot browser, resources, settings, first-run wizard)
 - :white_check_mark: Decide on the loot data source, map art, and sync approach
-- :white_large_square: Sign off on the mockups
+- :white_check_mark: Sign off on the mockups
 
 ### Phase 1: Foundation
 - :white_large_square: .NET 10 MAUI solution with a shared core library
@@ -37,13 +37,14 @@ Status: :white_check_mark: done, :construction: in progress, :white_large_square
 - :white_large_square: Search and jump-to-location
 
 ### Phase 4: Loot locations
-- :white_large_square: Weapons
 - :white_large_square: Manuals
 - :white_large_square: Parts and components
 - :white_large_square: Loot browser with filters and show-on-map
 
 ### Phase 5: Resource tracking
 - :white_large_square: Inventory have/need counts with quick +/- controls
+- :white_large_square: Crafting recipes with tracked materials on the map
+- :white_large_square: Common component totals (Synthetics, Electronics, Chemicals, Metals)
 - :white_large_square: Goals and progress tracking
 - :white_large_square: Import counts from a saved screenshot
 - :white_large_square: Always-on-top overlay (borderless windowed mode)
@@ -57,6 +58,7 @@ Status: :white_check_mark: done, :construction: in progress, :white_large_square
 
 ### Future
 - :white_large_square: Android release on Google Play
+- :white_large_square: Gunsmith page: weapon locations and custom builds
 - :white_large_square: In-app loot location submissions with review
 - :white_large_square: Opt-in hotkey capture of the Stash/FOB screens
 - :white_large_square: Xbox Game Bar widget
