@@ -26,7 +26,7 @@ public static class MauiProgram
         builder.Logging
             .AddLevelSwitch(levelSwitch)
             .AddRollingFile(
-                new RollingFileLoggerOptions { Directory = Path.Combine(FileSystem.AppDataDirectory, AppInfo.LogFolderName) },
+                new RollingFileLoggerOptions { Directory = Path.Combine(FileSystem.AppDataDirectory, AppConstants.LogFolderName) },
                 levelSwitch);
 #if DEBUG
         builder.Logging.AddDebug();
@@ -47,7 +47,7 @@ public static class MauiProgram
         app.Services.GetRequiredService<GlobalExceptionHandler>().Register();
         app.Services.GetRequiredService<LogLevelSettings>().Load();
         app.Services.GetRequiredService<ILogger<MauiApp>>()
-            .LogInformation("{App} started; log level {Level}.", AppInfo.Name, levelSwitch.Level);
+            .LogInformation("{App} started; log level {Level}.", AppConstants.Name, levelSwitch.Level);
         return app;
     }
 }

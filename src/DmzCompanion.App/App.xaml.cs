@@ -10,5 +10,5 @@ public partial class App : Application
     }
 
     protected override Window CreateWindow(IActivationState? activationState) =>
-        new(new AppShell()) { Title = AppInfo.Name };
+        new(new AppShell()) { Title = AppConstants.Name };
 }

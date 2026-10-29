@@ -1,6 +1,6 @@
 namespace DmzCompanion.Core.Models;
 
-public static class AppInfo
+public static class AppConstants
 {
     public const string Name = "DMZ Companion";
 
