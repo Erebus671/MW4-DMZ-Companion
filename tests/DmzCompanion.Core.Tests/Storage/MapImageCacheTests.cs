@@ -123,6 +123,22 @@ public sealed class MapImageCacheTests : CacheTestBase
     }
 
     [Fact]
+    public async Task ReferenceChangedAwayFromCachedSize_SetsRecalibrationFlag()
+    {
+        using var db = await OpenAsync(Ct);
+        var cache = new MapImageCache(db, _logger);
+        await cache.ApplyCheckAsync(SamplePackage.Map, Downloaded(1440, 1404), Ct);
+        Assert.False((await cache.GetAsync("dmz", Ct))!.NeedsRecalibration);
+
+        var notModified = new MapImageCheckResult(MapImageCheckStatus.NotModified);
+        var action = await cache.ApplyCheckAsync(SamplePackage.Map with { ReferenceWidth = 2048 }, notModified, Ct);
+
+        Assert.Equal(MapImageAction.KeepCache, action);
+        Assert.True((await cache.GetAsync("dmz", Ct))!.NeedsRecalibration);
+        Assert.Single(_logger.Records, r => r.Level == LogLevel.Warning);
+    }
+
+    [Fact]
     public async Task FirstDownloadWithWrongSize_IsRejected()
     {
         using var db = await OpenAsync(Ct);

@@ -153,18 +153,23 @@ public sealed class MapImageCache(CacheDatabase database, ILogger<MapImageCache>
     /// <summary>Clears a stale flag once the reference size matches the cached image.</summary>
     private bool NeedsRecalibration(MapImageInfo cached, GameMap map)
     {
-        if (!cached.NeedsRecalibration)
-        {
-            return false;
-        }
-
-        if (cached.Width == map.ReferenceWidth && cached.Height == map.ReferenceHeight)
+        var matches = cached.Width == map.ReferenceWidth && cached.Height == map.ReferenceHeight;
+        if (cached.NeedsRecalibration && matches)
         {
             _logger.LogInformation("Map image for {MapId} matches the reference size again; recalibration flag cleared.", map.Id);
-            return false;
+        }
+        else if (!cached.NeedsRecalibration && !matches)
+        {
+            _logger.LogWarning(
+                "Cached map image for {MapId} is {Width}x{Height}, reference is now {RefWidth}x{RefHeight}; overlays need recalibration.",
+                map.Id,
+                cached.Width,
+                cached.Height,
+                map.ReferenceWidth,
+                map.ReferenceHeight);
         }
 
-        return true;
+        return !matches;
     }
 
     private static async Task Touch(
