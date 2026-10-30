@@ -3,6 +3,9 @@
     <Project Path="src/DmzCompanion.App/DmzCompanion.App.csproj" />
     <Project Path="src/DmzCompanion.Core/DmzCompanion.Core.csproj" />
   </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/DmzCompanion.PackageSigner/DmzCompanion.PackageSigner.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/DmzCompanion.Core.Tests/DmzCompanion.Core.Tests.csproj" />
   </Folder>

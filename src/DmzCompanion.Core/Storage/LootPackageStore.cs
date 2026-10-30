@@ -31,7 +31,15 @@ public sealed class LootPackageStore(CacheDatabase database, ILogger<LootPackage
 
     /// <summary>Validates and atomically replaces the cached package.</summary>
     /// <exception cref="InvalidLootPackageException">The package failed validation.</exception>
-    public async Task ReplaceAsync(LootPackage package, CancellationToken cancellationToken = default)
+    public Task ReplaceAsync(LootPackage package, CancellationToken cancellationToken = default) =>
+        InstallAsync(package, requireNewer: false, cancellationToken);
+
+    /// <summary>Like <see cref="ReplaceAsync"/>, but only if the cached revision is older. Returns false otherwise.</summary>
+    /// <exception cref="InvalidLootPackageException">The package failed validation.</exception>
+    public Task<bool> TryInstallNewerAsync(LootPackage package, CancellationToken cancellationToken = default) =>
+        InstallAsync(package, requireNewer: true, cancellationToken);
+
+    private async Task<bool> InstallAsync(LootPackage package, bool requireNewer, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(package);
 
@@ -46,12 +54,21 @@ public sealed class LootPackageStore(CacheDatabase database, ILogger<LootPackage
             throw new InvalidLootPackageException(errors);
         }
 
-        await _database.RunAsync(
+        var written = await _database.RunAsync(
             "replace package",
-            (c, ct) => WriteAsync(c, package, ct),
+            (c, ct) => WriteAsync(c, package, requireNewer, ct),
             cancellationToken).ConfigureAwait(false);
 
-        _logger.LogInformation("Cached loot package revision {Revision}.", package.Revision);
+        if (written)
+        {
+            _logger.LogInformation("Cached loot package revision {Revision}.", package.Revision);
+        }
+        else
+        {
+            _logger.LogDebug("Loot package revision {Revision} isn't newer than the cached one; skipped.", package.Revision);
+        }
+
+        return written;
     }
 
     private static async Task<LootPackageInfo?> ReadInfoAsync(SqliteConnection connection, CancellationToken ct)
@@ -64,9 +81,16 @@ public sealed class LootPackageStore(CacheDatabase database, ILogger<LootPackage
             : null;
     }
 
-    private async Task<bool> WriteAsync(SqliteConnection connection, LootPackage package, CancellationToken ct)
+    private async Task<bool> WriteAsync(SqliteConnection connection, LootPackage package, bool requireNewer, CancellationToken ct)
     {
+        // Immediate transaction: revision check and write are atomic.
         using var tx = connection.BeginTransaction();
+
+        if (requireNewer && await ReadInfoWithAsync(connection, tx, ct).ConfigureAwait(false) is { } current
+            && current.Revision >= package.Revision)
+        {
+            return false;
+        }
 
         foreach (var table in PackageTables)
         {
@@ -194,14 +218,15 @@ public sealed class LootPackageStore(CacheDatabase database, ILogger<LootPackage
         }
 
         using (var recipes = new Insert(
-            connection, tx, "recipes", "id", "ord", "category_id", "name", "tier", "description", "cash_cost"))
+            connection, tx, "recipes", "id", "ord", "category_id", "name", "tier", "description", "cash_cost", "unverified"))
         using (var ingredients = new Insert(connection, tx, "recipe_ingredients", "recipe_id", "ord", "item_id", "quantity"))
         using (var components = new Insert(connection, tx, "recipe_components", "recipe_id", "ord", "component", "quantity"))
         {
             for (var i = 0; i < package.Recipes.Count; i++)
             {
                 var r = package.Recipes[i];
-                await recipes.ExecAsync(ct, r.Id, i, r.CategoryId, r.Name, r.Tier, r.Description, r.CashCost).ConfigureAwait(false);
+                await recipes.ExecAsync(ct, r.Id, i, r.CategoryId, r.Name, r.Tier, r.Description, r.CashCost, r.Unverified ? 1 : 0)
+                    .ConfigureAwait(false);
                 for (var j = 0; j < r.Ingredients.Count; j++)
                 {
                     await ingredients.ExecAsync(ct, r.Id, j, r.Ingredients[j].ItemId, r.Ingredients[j].Quantity).ConfigureAwait(false);
@@ -342,10 +367,11 @@ public sealed class LootPackageStore(CacheDatabase database, ILogger<LootPackage
             r => new ComponentQuantity(ParseEnum<ComponentType>(r.GetString(1)), r.GetInt32(2)), ct).ConfigureAwait(false);
 
         var recipes = await ReadAsync(connection, tx,
-            "SELECT id, category_id, name, tier, description, cash_cost FROM recipes ORDER BY ord;",
+            "SELECT id, category_id, name, tier, description, cash_cost, unverified FROM recipes ORDER BY ord;",
             r => new CraftingRecipe(
                 r.GetString(0), r.GetString(1), r.GetString(2), r.GetInt32(3), r.GetString(4), r.GetInt64(5),
-                ingredients.GetValueOrDefault(r.GetString(0)) ?? [], components.GetValueOrDefault(r.GetString(0)) ?? []),
+                ingredients.GetValueOrDefault(r.GetString(0)) ?? [], components.GetValueOrDefault(r.GetString(0)) ?? [],
+                r.GetInt64(6) != 0),
             ct).ConfigureAwait(false);
 
         tx.Commit();

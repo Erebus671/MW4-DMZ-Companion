@@ -121,4 +121,44 @@ public sealed class LootPackageStoreTests : CacheTestBase
         Assert.IsType<InvalidDataException>(ex.InnerException);
         Assert.Contains(DbLogger.Records, r => r.Level == LogLevel.Error);
     }
+
+    [Fact]
+    public async Task UnverifiedRecipe_RoundTrips()
+    {
+        var sample = SamplePackage.Create();
+        var package = sample with { Recipes = [sample.Recipes[0] with { Unverified = true }, sample.Recipes[1]] };
+        using var db = await OpenAsync(Ct);
+        var store = new LootPackageStore(db, _logger);
+
+        await store.ReplaceAsync(package, Ct);
+        var loaded = (await store.LoadAsync(Ct))!;
+
+        Assert.Equal([true, false], loaded.Recipes.Select(r => r.Unverified));
+    }
+
+    [Theory]
+    [InlineData(2, true, 2)]
+    [InlineData(3, false, 3)]
+    [InlineData(1, false, 3)]
+    public async Task TryInstallNewer_OnlyInstallsHigherRevisions(long revision, bool expected, long kept)
+    {
+        using var db = await OpenAsync(Ct);
+        var store = new LootPackageStore(db, _logger);
+        await store.ReplaceAsync(SamplePackage.Create(expected ? 1 : 3), Ct);
+
+        var installed = await store.TryInstallNewerAsync(SamplePackage.Create(revision), Ct);
+
+        Assert.Equal(expected, installed);
+        Assert.Equal(kept, (await store.GetInfoAsync(Ct))!.Revision);
+    }
+
+    [Fact]
+    public async Task TryInstallNewer_InstallsIntoEmptyCache()
+    {
+        using var db = await OpenAsync(Ct);
+        var store = new LootPackageStore(db, _logger);
+
+        Assert.True(await store.TryInstallNewerAsync(SamplePackage.Create(5), Ct));
+        Assert.Equal(5, (await store.GetInfoAsync(Ct))!.Revision);
+    }
 }

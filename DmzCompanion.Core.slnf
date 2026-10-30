@@ -3,7 +3,8 @@
     "path": "DmzCompanion.slnx",
     "projects": [
       "src/DmzCompanion.Core/DmzCompanion.Core.csproj",
-      "tests/DmzCompanion.Core.Tests/DmzCompanion.Core.Tests.csproj"
+      "tests/DmzCompanion.Core.Tests/DmzCompanion.Core.Tests.csproj",
+      "tools/DmzCompanion.PackageSigner/DmzCompanion.PackageSigner.csproj"
     ]
   }
 }

@@ -1,8 +1,11 @@
+using System.Text.Json.Serialization;
+
 namespace DmzCompanion.Core.Loot;
 
 /// <summary>Normalized position: 0 to 1 across the map's reference image, origin top-left.</summary>
 public readonly record struct MapPoint(double X, double Y)
 {
+    [JsonIgnore]
     public bool IsNormalized => MapUnits.IsNormalized(X) && MapUnits.IsNormalized(Y);
 
     /// <summary>Pixel position on an image of the given size.</summary>
@@ -12,6 +15,7 @@ public readonly record struct MapPoint(double X, double Y)
 /// <summary>Axis-aligned area in normalized coordinates.</summary>
 public readonly record struct MapRect(double MinX, double MinY, double MaxX, double MaxY)
 {
+    [JsonIgnore]
     public bool IsValid =>
         MapUnits.IsNormalized(MinX) && MapUnits.IsNormalized(MinY)
         && MapUnits.IsNormalized(MaxX) && MapUnits.IsNormalized(MaxY)
