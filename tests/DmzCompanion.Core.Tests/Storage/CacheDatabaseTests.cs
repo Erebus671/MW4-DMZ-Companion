@@ -30,7 +30,22 @@ public sealed class CacheDatabaseTests : CacheTestBase
         await second.InitializeAsync(Ct);
 
         Assert.Equal(42, await new UserStateStore(second).GetCashAsync(Ct));
-        Assert.Single(DbLogger.Records, r => r.Level == LogLevel.Information);
+        Assert.Equal(SchemaMigrations.All.Count, DbLogger.Records.Count(r => r.Level == LogLevel.Information));
+    }
+
+    [Fact]
+    public async Task V1Database_UpgradesWithRecipesVerified()
+    {
+        using (var old = NewDatabase(SchemaMigrations.All.Take(1).ToArray()))
+        {
+            await old.InitializeAsync(Ct);
+        }
+
+        using var updated = NewDatabase();
+        await updated.InitializeAsync(Ct);
+
+        Assert.Equal(SchemaMigrations.All.Count, await ReadVersionAsync(Ct));
+        Assert.Equal(1L, await ScalarAsync("SELECT COUNT(*) FROM pragma_table_info('recipes') WHERE name = 'unverified' AND dflt_value = '0';", Ct));
     }
 
     [Fact]

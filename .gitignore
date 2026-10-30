@@ -19,5 +19,9 @@ Thumbs.db
 *.p12
 *.keystore
 *.jks
+# Package signing keys
+*.pem
+*.key
+*.p8
 *.env
 .env*

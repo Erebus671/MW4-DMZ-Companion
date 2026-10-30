@@ -14,8 +14,9 @@
 | `src/DmzCompanion.Core` | Shared logic, no UI dependencies |
 | `src/DmzCompanion.App` | MAUI app (Map, Loot, Resources, Settings) |
 | `tests/DmzCompanion.Core.Tests` | xUnit v3 tests for Core |
+| `tools/DmzCompanion.PackageSigner` | Signs data packages |
 | `DmzCompanion.slnx` | Full solution |
-| `DmzCompanion.Core.slnf` | Core and tests only, builds on any OS |
+| `DmzCompanion.Core.slnf` | Core, tests and tools, builds on any OS |
 
 The App targets `net10.0-windows10.0.19041.0` only. Android (`net10.0-android`) gets added to `TargetFrameworks` in the App project after Windows 1.0.
 
@@ -46,3 +47,20 @@ Run from the repo root so `global.json` applies (it selects the Microsoft.Testin
 Levels: Debug, Info, Warn, Error, Critical, Fatal, set in Settings and saved in Preferences. Default is Info. Logs roll daily or at 5 MB, keeping 10 files, in `logs` under the app's local data folder (`FileSystem.AppDataDirectory`).
 
 Fatal maps to `LogLevel.Critical`, so the Fatal and Critical levels both capture every Critical entry.
+
+## Data package
+
+| Item | Value |
+|---|---|
+| Content | Maps, labels, zones, POIs, items, spawn areas, recipes. Map images aren't included; they're fetched from GamesAtlas |
+| Signing | ECDSA P-256, SHA-256. Public keys in `PackageTrustedKeys`; updates stay off while it's empty |
+| Hosting | Rolling `loot-data` GitHub release: `loot-manifest.json` plus `loot-package-r{revision}.json` |
+| Updates | At startup, then every 6 hours; 30 minutes after a network or storage failure. Newer revisions only. Any failure keeps the installed package |
+| Limits | HTTPS only, 30 s per request, manifest 64 KB, package 32 MB |
+| Private key | Never in the repo; `*.pem`, `*.key`, `*.p8` are ignored |
+
+| Task | Command |
+|---|---|
+| Create a key | `dotnet run --project tools/DmzCompanion.PackageSigner -- keygen PATH.pem`, then add the printed public key to `PackageTrustedKeys` |
+| Sign | `dotnet run --project tools/DmzCompanion.PackageSigner -- sign PACKAGE.json KEY.pem PACKAGE_URL loot-manifest.json` |
+| Verify | `dotnet run --project tools/DmzCompanion.PackageSigner -- verify loot-manifest.json PACKAGE.json [PUBLIC_KEY]` |

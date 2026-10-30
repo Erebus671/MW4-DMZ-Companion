@@ -6,6 +6,7 @@ internal static class SchemaMigrations
     public static IReadOnlyList<SchemaMigration> All { get; } =
     [
         new(1, "Initial package and user state tables", V1),
+        new(2, "Recipe unverified flag", V2),
     ];
 
     // User and map image tables have no foreign keys to package tables so they survive package replacement.
@@ -207,5 +208,9 @@ internal static class SchemaMigrations
             quantity INTEGER NOT NULL CHECK (quantity > 0),
             PRIMARY KEY (goal_id, ord)
         ) STRICT, WITHOUT ROWID;
+        """;
+
+    private const string V2 = """
+        ALTER TABLE recipes ADD COLUMN unverified INTEGER NOT NULL DEFAULT 0 CHECK (unverified IN (0, 1));
         """;
 }
